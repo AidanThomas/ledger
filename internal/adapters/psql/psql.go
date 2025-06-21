@@ -6,15 +6,19 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/AidanThomas/ledger/internal/domain"
+	"github.com/AidanThomas/ledger/internal/ports"
 	_ "github.com/lib/pq"
 )
+
+var _ ports.Database = (*PSQL)(nil)
 
 type PSQL struct {
 	ctx context.Context
 	db  *sql.DB
 }
 
-func NewPSQL() *PSQL {
+func New() *PSQL {
 	connStr := "postgres://postgres:password@localhost:5432/ledger_test?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -27,24 +31,24 @@ func NewPSQL() *PSQL {
 	}
 }
 
-func (p *PSQL) DoQuery(query string) ([]string, [][]string, error) {
+func (p *PSQL) Execute(query string) (*domain.DBResult, error) {
 	rows, err := p.db.QueryContext(p.ctx, query)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// The query doesn't return any rows
 	if len(columns) == 0 {
-		return nil, nil, nil
+		return &domain.DBResult{Empty: true}, nil
 	}
 
-	var result [][]string
+	result := domain.DBResult{Columns: columns}
 	for rows.Next() {
 		values := make([]any, len(columns))
 		pointers := make([]any, len(columns))
@@ -53,7 +57,7 @@ func (p *PSQL) DoQuery(query string) ([]string, [][]string, error) {
 		}
 
 		if err := rows.Scan(pointers...); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		row := make([]string, len(columns))
@@ -65,9 +69,8 @@ func (p *PSQL) DoQuery(query string) ([]string, [][]string, error) {
 			}
 		}
 
-		result = append(result, row)
-
+		result.Rows = append(result.Rows, row)
 	}
 
-	return columns, result, nil
+	return &result, nil
 }
