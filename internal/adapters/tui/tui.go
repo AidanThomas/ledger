@@ -3,20 +3,23 @@ package tui
 import (
 	"fmt"
 
-	"github.com/AidanThomas/ledger/internal/app/ledger"
+	"github.com/AidanThomas/ledger/internal/domain"
+	"github.com/AidanThomas/ledger/internal/ports"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var _ ports.UserInterface = (*TUI)(nil)
+
 type TUI struct {
-	ledger *ledger.Ledger
+	ledger domain.Ledger
 
 	queryarea  textarea.Model
 	resultarea textarea.Model
 	err        error
 }
 
-func New(l *ledger.Ledger) *TUI {
+func New() *TUI {
 	q := textarea.New()
 	q.Placeholder = "Enter SQL query..."
 	q.Focus()
@@ -25,14 +28,15 @@ func New(l *ledger.Ledger) *TUI {
 	r.Placeholder = "Results will be here..."
 
 	return &TUI{
-		ledger:     l,
 		queryarea:  q,
 		resultarea: r,
 		err:        nil,
 	}
 }
 
-func (t *TUI) Start() error {
+func (t *TUI) Run(l domain.Ledger) error {
+	t.ledger = l
+	l.Connect("postgres://postgres:password@localhost:5432/ledger_test?sslmode=disable")
 	p := tea.NewProgram(t, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return err

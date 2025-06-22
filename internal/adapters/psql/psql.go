@@ -18,9 +18,8 @@ type PSQL struct {
 	db  *sql.DB
 }
 
-func New() *PSQL {
-	connStr := "postgres://postgres:password@localhost:5432/ledger_test?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+func New(conn string) *PSQL {
+	db, err := sql.Open("postgres", conn)
 	if err != nil {
 		log.Fatal(err)
 	}

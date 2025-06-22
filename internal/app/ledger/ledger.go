@@ -10,6 +10,8 @@ import (
 	"github.com/AidanThomas/ledger/internal/ports"
 )
 
+var _ *domain.Ledger = (*domain.Ledger)(nil)
+
 type Ledger struct {
 	db   ports.Database
 	conf config.Configuration
@@ -29,7 +31,7 @@ func (l *Ledger) Connect(conn string) error {
 
 	switch dbFlavour {
 	case "psql":
-		l.db = psql.New()
+		l.db = psql.New(conn)
 	default:
 		return errors.New("database not supported")
 	}
@@ -42,8 +44,8 @@ func (l *Ledger) Execute(query string) (string, error) {
 		return "", err
 	}
 
-	var output string
-	if res != nil {
+	output := "NO ROWS RETURNED"
+	if !res.Empty {
 		output = buildTable(*res)
 	}
 	return output, nil
