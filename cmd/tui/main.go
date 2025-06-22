@@ -17,9 +17,9 @@ func main() {
 	}
 
 	ledger := ledger.New(conf)
-	tui := tui.New()
+	tui := tui.New(ledger)
 
-	if err := tui.Run(ledger); err != nil {
+	if err := tui.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
