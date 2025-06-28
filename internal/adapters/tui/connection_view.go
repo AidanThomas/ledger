@@ -11,12 +11,12 @@ import (
 var _ View = (*ConnectionView)(nil)
 
 type ConnectionView struct {
-	ledger domain.Ledger
+	ledger domain.App
 
 	connInput textinput.Model
 }
 
-func NewConnStringView(l domain.Ledger) ConnectionView {
+func NewConnStringView(l domain.App) ConnectionView {
 	c := textinput.New()
 	c.Placeholder = "Enter a connection string..."
 

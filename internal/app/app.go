@@ -1,4 +1,4 @@
-package ledger
+package app
 
 import (
 	"errors"
@@ -10,18 +10,18 @@ import (
 	"github.com/AidanThomas/ledger/internal/ports"
 )
 
-var _ *domain.Ledger = (*domain.Ledger)(nil)
+var _ domain.App = (*App)(nil)
 
-type Ledger struct {
+type App struct {
 	db   ports.Database
 	conf config.Configuration
 }
 
-func New(conf *config.Configuration) *Ledger {
-	return &Ledger{conf: *conf}
+func New(conf *config.Configuration) *App {
+	return &App{conf: *conf}
 }
 
-func (l *Ledger) Connect(conn string) error {
+func (l *App) Connect(conn string) error {
 	var dbFlavour string
 	for db, prefix := range l.conf.SupportedDBs {
 		if strings.HasPrefix(conn, prefix) {
@@ -38,7 +38,7 @@ func (l *Ledger) Connect(conn string) error {
 	return nil
 }
 
-func (l *Ledger) Execute(query string) (string, error) {
+func (l *App) Execute(query string) (string, error) {
 	res, err := l.db.Execute(query)
 	if err != nil {
 		return "", err

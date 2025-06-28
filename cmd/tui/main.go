@@ -6,7 +6,7 @@ import (
 
 	"github.com/AidanThomas/ledger/config"
 	"github.com/AidanThomas/ledger/internal/adapters/tui"
-	"github.com/AidanThomas/ledger/internal/app/ledger"
+	"github.com/AidanThomas/ledger/internal/app"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ledger := ledger.New(conf)
+	ledger := app.New(conf)
 	tui := tui.New(ledger)
 
 	if err := tui.Run(); err != nil {

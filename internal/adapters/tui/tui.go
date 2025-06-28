@@ -11,13 +11,13 @@ import (
 var _ ports.UserInterface = (*TUI)(nil)
 
 type TUI struct {
-	ledger domain.Ledger
+	ledger domain.App
 
 	active ViewName
 	views  map[ViewName]View
 }
 
-func New(l domain.Ledger) *TUI {
+func New(l domain.App) *TUI {
 	connView := NewConnStringView(l)
 	queryView := NewQueryInputView(l)
 

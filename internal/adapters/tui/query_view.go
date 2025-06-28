@@ -11,13 +11,13 @@ import (
 var _ View = (*QueryView)(nil)
 
 type QueryView struct {
-	ledger domain.Ledger
+	ledger domain.App
 
 	queryarea  textarea.Model
 	resultarea textarea.Model
 }
 
-func NewQueryInputView(l domain.Ledger) QueryView {
+func NewQueryInputView(l domain.App) QueryView {
 	q := textarea.New()
 	q.Placeholder = "Enter SQL query..."
 
