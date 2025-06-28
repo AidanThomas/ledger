@@ -21,26 +21,20 @@ type TUI struct {
 	windowWidth  int
 }
 
+type RedrawMsg struct{}
+
 func New(l domain.App) *TUI {
-	vc := make(chan ViewName)
-
-	connView := NewConnStringView(l, vc)
-	queryView := NewQueryInputView(l, vc)
-
-	return &TUI{
+	t := &TUI{
 		ledger: l,
-		views: map[ViewName]View{
-			ViewNameConn:  &connView,
-			ViewNameQuery: &queryView,
-		},
-		active:     ViewNameConn,
-		viewChange: vc,
+		views:  make(map[ViewName]View),
+		active: ViewNameConn,
 	}
+	t.registerView(NewConnStringView(l))
+	t.registerView(NewQueryInputView(l))
+	return t
 }
 
 func (t *TUI) Run() error {
-	go t.listenForViewChange()
-
 	p := tea.NewProgram(t, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return err
@@ -55,6 +49,13 @@ func (t *TUI) Init() tea.Cmd {
 
 func (t *TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case ChangeViewMsg:
+		t.active = msg.ChangeTo
+		t.resolveView().HandleMessage(tea.WindowSizeMsg{
+			Width:  t.windowWidth,
+			Height: t.windowHeight,
+		})
+		t.resolveView().Activate()
 	case tea.WindowSizeMsg:
 		t.windowHeight = msg.Height
 		t.windowWidth = msg.Width
@@ -74,14 +75,11 @@ func (t *TUI) resolveView() View {
 	return view
 }
 
-func (t *TUI) listenForViewChange() {
-	vn := <-t.viewChange
-	t.active = vn
-
-	view := t.resolveView()
-	view.Activate()
-	view.HandleMessage(tea.WindowSizeMsg{
-		Width:  t.windowWidth,
-		Height: t.windowHeight,
-	})
+func (t *TUI) registerView(v View) {
+	n := v.Name()
+	if _, ok := t.views[n]; !ok {
+		t.views[n] = v
+		return
+	}
+	log.Fatalf("trying to register already existing view: %s\n", n)
 }

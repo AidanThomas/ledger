@@ -2,44 +2,59 @@ package tui
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/AidanThomas/ledger/internal/domain"
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var _ View = (*ConnectionView)(nil)
 
 type ConnectionView struct {
-	ledger     domain.App
-	viewChange chan ViewName
-
-	connInput textinput.Model
+	ledger   domain.App
+	connList list.Model
 }
 
-func NewConnStringView(l domain.App, vc chan ViewName) ConnectionView {
-	c := textinput.New()
-	c.Placeholder = "BALLS"
+var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
-	return ConnectionView{
-		ledger:     l,
-		viewChange: vc,
+type connection struct{ name, conn string }
 
-		connInput: c,
+func (c connection) Title() string       { return c.name }
+func (c connection) Description() string { return c.conn }
+func (c connection) FilterValue() string { return c.name }
+
+func NewConnStringView(l domain.App) *ConnectionView {
+	savedConns, err := l.GetConnections()
+	if err != nil {
+		log.Fatal("cannot get list of saved connections")
+	}
+	connections := make([]list.Item, len(savedConns))
+	for i, c := range savedConns {
+		connections[i] = connection{
+			name: c.Name,
+			conn: c.Conn,
+		}
+	}
+
+	li := list.New(connections, list.NewDefaultDelegate(), 0, 0)
+	li.Title = "Select a connection"
+
+	return &ConnectionView{
+		ledger:   l,
+		connList: li,
 	}
 }
 
+func (v *ConnectionView) Name() ViewName { return ViewNameConn }
+
 func (v *ConnectionView) Activate() tea.Cmd {
-	v.connInput.Focus()
-	return textinput.Blink
+	return nil
 }
 
 func (v *ConnectionView) GetView() string {
-	return fmt.Sprintf(
-		"%s\n%s\n",
-		"Input connection string",
-		v.connInput.View(),
-	)
+	return docStyle.Render(v.connList.View())
 }
 
 func (v *ConnectionView) HandleMessage(msg tea.Msg) tea.Cmd {
@@ -48,26 +63,21 @@ func (v *ConnectionView) HandleMessage(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyEsc:
-			if v.connInput.Focused() {
-				v.connInput.Blur()
-			}
 		case tea.KeyEnter:
-			if err := v.ledger.Connect(v.connInput.Value()); err != nil {
+			c := v.connList.SelectedItem().(connection)
+			if err := v.ledger.Connect(c.conn); err != nil {
 				fmt.Println(err)
 			} else {
-				v.viewChange <- ViewNameQuery
+				cmds = append(cmds, ChangeView(ViewNameQuery))
 			}
 		case tea.KeyCtrlC:
 			return tea.Quit
-		default:
-			if !v.connInput.Focused() {
-				cmd = v.connInput.Focus()
-				cmds = append(cmds, cmd)
-			}
 		}
+	case tea.WindowSizeMsg:
+		hor, ver := docStyle.GetFrameSize()
+		v.connList.SetSize(msg.Width-hor, msg.Height-ver)
 	}
-	v.connInput, cmd = v.connInput.Update(msg)
+	v.connList, cmd = v.connList.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return tea.Batch(cmds...)

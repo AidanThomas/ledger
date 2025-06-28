@@ -12,27 +12,25 @@ var _ View = (*QueryView)(nil)
 
 type QueryView struct {
 	ledger     domain.App
-	viewChange chan ViewName
-
 	queryarea  textarea.Model
 	resultarea textarea.Model
 }
 
-func NewQueryInputView(l domain.App, vc chan ViewName) QueryView {
+func NewQueryInputView(l domain.App) *QueryView {
 	q := textarea.New()
 	q.Placeholder = "Enter SQL query..."
 
 	r := textarea.New()
 	r.Placeholder = "Results will be here..."
 
-	return QueryView{
+	return &QueryView{
 		ledger:     l,
-		viewChange: vc,
-
 		queryarea:  q,
 		resultarea: r,
 	}
 }
+
+func (v *QueryView) Name() ViewName { return ViewNameQuery }
 
 func (v *QueryView) Activate() tea.Cmd {
 	v.queryarea.Focus()

@@ -21,6 +21,19 @@ func New(conf *config.Configuration) *App {
 	return &App{conf: *conf}
 }
 
+func (l *App) GetConnections() ([]domain.Connection, error) {
+	return []domain.Connection{
+		{
+			Name: "ledger_test",
+			Conn: "postgres://postgres:password@localhost/ledger_test?sslmode=disable",
+		},
+		{
+			Name: "ledger_test2",
+			Conn: "postgres://postgres:password@localhost/ledger_test2?sslmode=disable",
+		},
+	}, nil
+}
+
 func (l *App) Connect(conn string) error {
 	var dbFlavour string
 	for db, prefix := range l.conf.SupportedDBs {

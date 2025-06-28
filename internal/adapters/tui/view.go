@@ -10,7 +10,18 @@ const (
 )
 
 type View interface {
+	Name() ViewName
 	Activate() tea.Cmd
 	GetView() string
 	HandleMessage(tea.Msg) tea.Cmd
+}
+
+func ChangeView(name ViewName) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeViewMsg{name}
+	}
+}
+
+type ChangeViewMsg struct {
+	ChangeTo ViewName
 }
