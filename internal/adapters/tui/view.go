@@ -2,11 +2,11 @@ package tui
 
 import tea "github.com/charmbracelet/bubbletea"
 
-type ViewName int
+type ViewName string
 
 const (
-	ViewNameConn = iota
-	ViewNameQuery
+	ViewNameConn  ViewName = "connection_view"
+	ViewNameQuery ViewName = "query_view"
 )
 
 type View interface {

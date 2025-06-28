@@ -11,13 +11,14 @@ import (
 var _ View = (*QueryView)(nil)
 
 type QueryView struct {
-	ledger domain.App
+	ledger     domain.App
+	viewChange chan ViewName
 
 	queryarea  textarea.Model
 	resultarea textarea.Model
 }
 
-func NewQueryInputView(l domain.App) QueryView {
+func NewQueryInputView(l domain.App, vc chan ViewName) QueryView {
 	q := textarea.New()
 	q.Placeholder = "Enter SQL query..."
 
@@ -25,7 +26,8 @@ func NewQueryInputView(l domain.App) QueryView {
 	r.Placeholder = "Results will be here..."
 
 	return QueryView{
-		ledger: l,
+		ledger:     l,
+		viewChange: vc,
 
 		queryarea:  q,
 		resultarea: r,

@@ -13,13 +13,19 @@ var _ ports.UserInterface = (*TUI)(nil)
 type TUI struct {
 	ledger domain.App
 
-	active ViewName
-	views  map[ViewName]View
+	active     ViewName
+	views      map[ViewName]View
+	viewChange chan ViewName
+
+	windowHeight int
+	windowWidth  int
 }
 
 func New(l domain.App) *TUI {
-	connView := NewConnStringView(l)
-	queryView := NewQueryInputView(l)
+	vc := make(chan ViewName)
+
+	connView := NewConnStringView(l, vc)
+	queryView := NewQueryInputView(l, vc)
 
 	return &TUI{
 		ledger: l,
@@ -27,39 +33,55 @@ func New(l domain.App) *TUI {
 			ViewNameConn:  &connView,
 			ViewNameQuery: &queryView,
 		},
-		active: ViewNameQuery,
+		active:     ViewNameConn,
+		viewChange: vc,
 	}
 }
 
 func (t *TUI) Run() error {
-	t.ledger.Connect("postgres://postgres:password@localhost:5432/ledger_test?sslmode=disable")
+	go t.listenForViewChange()
+
 	p := tea.NewProgram(t, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (t *TUI) Init() tea.Cmd {
-	view, ok := t.views[t.active]
-	if !ok {
-		log.Fatal("view not found")
-	}
-	return view.Activate()
+	return t.resolveView().Activate()
 }
 
 func (t *TUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	view, ok := t.views[t.active]
-	if !ok {
-		log.Fatal("view not found")
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		t.windowHeight = msg.Height
+		t.windowWidth = msg.Width
 	}
-	return t, view.HandleMessage(msg)
+	return t, t.resolveView().HandleMessage(msg)
 }
 
-func (t TUI) View() string {
+func (t *TUI) View() string {
+	return t.resolveView().GetView()
+}
+
+func (t *TUI) resolveView() View {
 	view, ok := t.views[t.active]
 	if !ok {
 		log.Fatal("view not found")
 	}
-	return view.GetView()
+	return view
+}
+
+func (t *TUI) listenForViewChange() {
+	vn := <-t.viewChange
+	t.active = vn
+
+	view := t.resolveView()
+	view.Activate()
+	view.HandleMessage(tea.WindowSizeMsg{
+		Width:  t.windowWidth,
+		Height: t.windowHeight,
+	})
 }

@@ -29,9 +29,13 @@ func (l *App) Connect(conn string) error {
 		}
 	}
 
+	var err error
 	switch dbFlavour {
 	case "psql":
-		l.db = psql.New(conn)
+		l.db, err = psql.New(conn)
+		if err != nil {
+			return err
+		}
 	default:
 		return errors.New("database not supported")
 	}

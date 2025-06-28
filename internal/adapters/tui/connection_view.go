@@ -11,29 +11,32 @@ import (
 var _ View = (*ConnectionView)(nil)
 
 type ConnectionView struct {
-	ledger domain.App
+	ledger     domain.App
+	viewChange chan ViewName
 
 	connInput textinput.Model
 }
 
-func NewConnStringView(l domain.App) ConnectionView {
+func NewConnStringView(l domain.App, vc chan ViewName) ConnectionView {
 	c := textinput.New()
-	c.Placeholder = "Enter a connection string..."
+	c.Placeholder = "BALLS"
 
 	return ConnectionView{
-		ledger: l,
+		ledger:     l,
+		viewChange: vc,
 
 		connInput: c,
 	}
 }
 
 func (v *ConnectionView) Activate() tea.Cmd {
+	v.connInput.Focus()
 	return textinput.Blink
 }
 
 func (v *ConnectionView) GetView() string {
 	return fmt.Sprintf(
-		"%s\n%s",
+		"%s\n%s\n",
 		"Input connection string",
 		v.connInput.View(),
 	)
@@ -52,6 +55,8 @@ func (v *ConnectionView) HandleMessage(msg tea.Msg) tea.Cmd {
 		case tea.KeyEnter:
 			if err := v.ledger.Connect(v.connInput.Value()); err != nil {
 				fmt.Println(err)
+			} else {
+				v.viewChange <- ViewNameQuery
 			}
 		case tea.KeyCtrlC:
 			return tea.Quit
@@ -64,5 +69,6 @@ func (v *ConnectionView) HandleMessage(msg tea.Msg) tea.Cmd {
 	}
 	v.connInput, cmd = v.connInput.Update(msg)
 	cmds = append(cmds, cmd)
+
 	return tea.Batch(cmds...)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/AidanThomas/ledger/internal/domain"
 	"github.com/AidanThomas/ledger/internal/ports"
@@ -18,16 +17,20 @@ type PSQL struct {
 	db  *sql.DB
 }
 
-func New(conn string) *PSQL {
+func New(conn string) (*PSQL, error) {
 	db, err := sql.Open("postgres", conn)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
 	}
 
 	return &PSQL{
 		ctx: context.Background(),
 		db:  db,
-	}
+	}, nil
 }
 
 func (p *PSQL) Execute(query string) (*domain.DBResult, error) {
