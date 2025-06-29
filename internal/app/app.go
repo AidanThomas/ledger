@@ -14,24 +14,26 @@ var _ domain.App = (*App)(nil)
 
 type App struct {
 	db   ports.Database
+	cs   ports.ConnectionStore
 	conf config.Configuration
 }
 
-func New(conf *config.Configuration) *App {
-	return &App{conf: *conf}
+func New(conf *config.Configuration, cs ports.ConnectionStore) *App {
+	return &App{conf: *conf, cs: cs}
 }
 
 func (l *App) GetConnections() ([]domain.Connection, error) {
-	return []domain.Connection{
-		{
-			Name: "ledger_test",
-			Conn: "postgres://postgres:password@localhost/ledger_test?sslmode=disable",
-		},
-		{
-			Name: "ledger_test2",
-			Conn: "postgres://postgres:password@localhost/ledger_test2?sslmode=disable",
-		},
-	}, nil
+	return l.cs.ReadAll()
+	// return []domain.Connection{
+	// 	{
+	// 		Name: "ledger_test",
+	// 		Conn: "postgres://postgres:password@localhost/ledger_test?sslmode=disable",
+	// 	},
+	// 	{
+	// 		Name: "ledger_test2",
+	// 		Conn: "postgres://postgres:password@localhost/ledger_test2?sslmode=disable",
+	// 	},
+	// }, nil
 }
 
 func (l *App) Connect(conn string) error {

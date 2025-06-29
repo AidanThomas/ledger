@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/AidanThomas/ledger/config"
+	"github.com/AidanThomas/ledger/internal/adapters/connection_store"
 	"github.com/AidanThomas/ledger/internal/adapters/tui"
 	"github.com/AidanThomas/ledger/internal/app"
 )
@@ -16,7 +17,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	ledger := app.New(conf)
+	cs, err := connection_store.NewLocal()
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	ledger := app.New(conf, cs)
 	tui := tui.New(ledger)
 
 	if err := tui.Run(); err != nil {

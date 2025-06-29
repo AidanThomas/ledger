@@ -1,5 +1,8 @@
 package domain
 
 type Connection struct {
-	Name, Conn string
+	ID   int
+	Name string
+	Conn string
+	Type string
 }

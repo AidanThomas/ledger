@@ -28,7 +28,7 @@ func (c connection) FilterValue() string { return c.name }
 func NewConnStringView(l domain.App) *ConnectionView {
 	savedConns, err := l.GetConnections()
 	if err != nil {
-		log.Fatal("cannot get list of saved connections")
+		log.Fatalf("cannot get list of saved connections: %s", err)
 	}
 	connections := make([]list.Item, len(savedConns))
 	for i, c := range savedConns {
