@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/AidanThomas/ledger/config"
-	"github.com/AidanThomas/ledger/internal/adapters/psql"
+	"github.com/AidanThomas/ledger/internal/adapters/database"
 	"github.com/AidanThomas/ledger/internal/domain"
 	"github.com/AidanThomas/ledger/internal/ports"
 )
@@ -24,16 +24,6 @@ func New(conf *config.Configuration, cs ports.ConnectionStore) *App {
 
 func (l *App) GetConnections() ([]domain.Connection, error) {
 	return l.cs.ReadAll()
-	// return []domain.Connection{
-	// 	{
-	// 		Name: "ledger_test",
-	// 		Conn: "postgres://postgres:password@localhost/ledger_test?sslmode=disable",
-	// 	},
-	// 	{
-	// 		Name: "ledger_test2",
-	// 		Conn: "postgres://postgres:password@localhost/ledger_test2?sslmode=disable",
-	// 	},
-	// }, nil
 }
 
 func (l *App) Connect(conn string) error {
@@ -47,7 +37,7 @@ func (l *App) Connect(conn string) error {
 	var err error
 	switch dbFlavour {
 	case "psql":
-		l.db, err = psql.New(conn)
+		l.db, err = database.NewPSQL(conn)
 		if err != nil {
 			return err
 		}

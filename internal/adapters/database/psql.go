@@ -1,4 +1,4 @@
-package psql
+package database
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type PSQL struct {
 	db  *sql.DB
 }
 
-func New(conn string) (*PSQL, error) {
+func NewPSQL(conn string) (*PSQL, error) {
 	db, err := sql.Open("postgres", conn)
 	if err != nil {
 		return nil, err

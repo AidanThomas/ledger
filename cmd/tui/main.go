@@ -6,7 +6,7 @@ import (
 
 	"github.com/AidanThomas/ledger/config"
 	"github.com/AidanThomas/ledger/internal/adapters/connection_store"
-	"github.com/AidanThomas/ledger/internal/adapters/tui"
+	"github.com/AidanThomas/ledger/internal/adapters/ui/tui"
 	"github.com/AidanThomas/ledger/internal/app"
 )
 
