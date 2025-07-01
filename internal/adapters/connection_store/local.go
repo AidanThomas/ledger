@@ -46,6 +46,11 @@ func NewLocal() (*Local, error) {
 }
 
 func (l *Local) Create(conn domain.Connection) error {
+	_, err := l.ReadAll()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -66,7 +71,7 @@ func (l *Local) ReadAll() ([]domain.Connection, error) {
 
 	out := make([]domain.Connection, len(conns))
 	for i, c := range conns {
-		conn, err := c.buildConnectionString()
+		conn, err := c.BuildConnectionString()
 		if err != nil {
 			return nil, err
 		}

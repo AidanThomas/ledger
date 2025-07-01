@@ -3,6 +3,8 @@ package connection_store
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 type Connection struct {
@@ -17,7 +19,7 @@ type Connection struct {
 	Type     string `json:"type"`
 }
 
-func (c *Connection) buildConnectionString() (string, error) {
+func (c *Connection) BuildConnectionString() (string, error) {
 	switch c.Type {
 	case "postgres":
 		host := c.Host
@@ -38,4 +40,29 @@ func (c *Connection) buildConnectionString() (string, error) {
 	default:
 		return "", errors.New("not supported database type")
 	}
+}
+
+func (c *Connection) ParseConnectionString(conn string) error {
+	switch c.Type {
+	case "postgres":
+		regex := regexp.MustCompile(`(postgres(?:ql)?):\/\/(?:([^@\s]+)@)?([^\/\s]+)(?:\/(\w+))?(?:\?(.+))?`)
+		parts := regex.FindStringSubmatch(conn)
+		if parts == nil {
+			return errors.New("no matches found")
+		}
+
+		login := parts[2]
+		server := parts[3]
+		db := parts[4]
+		query := parts[5]
+
+		c.User = strings.Split(login, ":")[0]
+		c.Password = strings.Split(login, ":")[1]
+		c.Host = strings.Split(server, ":")[0]
+		c.Database = db
+		c.SSLMode = query
+
+		return nil
+	}
+	return nil
 }
