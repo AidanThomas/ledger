@@ -64,24 +64,23 @@ func (l *Local) ReadAll() ([]domain.Connection, error) {
 		return nil, nil
 	}
 
-	var conns []Connection
+	var conns []domain.Connection
 	if err := json.Unmarshal(file, &conns); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal ledger_connections.json: %w", err)
 	}
 
 	out := make([]domain.Connection, len(conns))
-	for i, c := range conns {
-		conn, err := c.BuildConnectionString()
-		if err != nil {
-			return nil, err
-		}
-		out[i] = domain.Connection{
-			ID:   c.ID,
-			Name: c.Name,
-			Conn: conn,
-			Type: c.Type,
-		}
-	}
+	// for i, c := range conns {
+	// 	conn, err := app.FromConnectionString()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	out[i] = domain.Connection{
+	// 		ID:   c.ID,
+	// 		Name: c.Name,
+	// 		Conn: conn,
+	// 	}
+	// }
 
 	return out, nil
 }
