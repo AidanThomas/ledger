@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/AidanThomas/ledger/config"
@@ -26,6 +25,10 @@ func (l *App) GetConnections() ([]domain.Connection, error) {
 	return l.cs.ReadAll()
 }
 
+func (l *App) AddConnection(c domain.Connection) error {
+	return l.cs.Create(c)
+}
+
 func (l *App) Connect(conn string) error {
 	var dbFlavour string
 	for db, prefix := range l.conf.SupportedDBs {
@@ -42,7 +45,7 @@ func (l *App) Connect(conn string) error {
 			return err
 		}
 	default:
-		return errors.New("database not supported")
+		return domain.ErrUnsupportedDb
 	}
 	return nil
 }

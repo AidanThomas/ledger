@@ -46,8 +46,21 @@ func NewLocal() (*Local, error) {
 }
 
 func (l *Local) Create(conn domain.Connection) error {
-	_, err := l.ReadAll()
+	cons, err := l.ReadAll()
 	if err != nil {
+		return err
+	}
+
+	conn.ID = len(cons) + 1
+
+	cons = append(cons, conn)
+
+	buf, err := json.Marshal(cons)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(l.fLoc, buf, 0700); err != nil {
 		return err
 	}
 
@@ -64,23 +77,10 @@ func (l *Local) ReadAll() ([]domain.Connection, error) {
 		return nil, nil
 	}
 
-	var conns []domain.Connection
-	if err := json.Unmarshal(file, &conns); err != nil {
+	var out []domain.Connection
+	if err := json.Unmarshal(file, &out); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal ledger_connections.json: %w", err)
 	}
-
-	out := make([]domain.Connection, len(conns))
-	// for i, c := range conns {
-	// 	conn, err := app.FromConnectionString()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	out[i] = domain.Connection{
-	// 		ID:   c.ID,
-	// 		Name: c.Name,
-	// 		Conn: conn,
-	// 	}
-	// }
 
 	return out, nil
 }

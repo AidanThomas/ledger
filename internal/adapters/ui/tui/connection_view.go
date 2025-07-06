@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/AidanThomas/ledger/internal/app"
 	"github.com/AidanThomas/ledger/internal/domain"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -15,6 +17,13 @@ var _ View = (*ConnectionView)(nil)
 type ConnectionView struct {
 	ledger   domain.App
 	connList list.Model
+	creating bool
+	form     NewForm
+}
+
+type NewForm struct {
+	inputs  []textinput.Model
+	focused int
 }
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
@@ -32,18 +41,33 @@ func NewConnStringView(l domain.App) *ConnectionView {
 	}
 	connections := make([]list.Item, len(savedConns))
 	for i, c := range savedConns {
+		conn, err := app.ToConnectionString(c)
+		if err != nil {
+			log.Fatal(err)
+		}
 		connections[i] = connection{
 			name: c.Name,
-			conn: c.Conn,
+			conn: conn,
 		}
 	}
 
 	li := list.New(connections, list.NewDefaultDelegate(), 0, 0)
 	li.Title = "Select a connection"
 
+	formInputs := []textinput.Model{
+		textinput.New(),
+		textinput.New(),
+	}
+
+	formInputs[0].Placeholder = "Name"
+	formInputs[1].Placeholder = "Connection string"
+
 	return &ConnectionView{
 		ledger:   l,
 		connList: li,
+		form: NewForm{
+			inputs: formInputs,
+		},
 	}
 }
 
@@ -54,7 +78,16 @@ func (v *ConnectionView) Activate() tea.Cmd {
 }
 
 func (v *ConnectionView) GetView() string {
-	return docStyle.Render(v.connList.View())
+	if !v.creating {
+		return docStyle.Render(v.connList.View())
+	}
+
+	formView := ""
+	for _, input := range v.form.inputs {
+		formView += input.View() + "\n"
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, docStyle.Render(v.connList.View()), docStyle.Render(formView))
 }
 
 func (v *ConnectionView) HandleMessage(msg tea.Msg) tea.Cmd {
@@ -70,6 +103,13 @@ func (v *ConnectionView) HandleMessage(msg tea.Msg) tea.Cmd {
 			} else {
 				cmds = append(cmds, ChangeView(ViewNameQuery))
 			}
+		case tea.KeyCtrlY:
+			v.creating = true
+			// c, err := app.FromConnectionString("postgres://test:pass@somehost:1234/db?sslmode=disable")
+			// if err != nil {
+			// 	fmt.Println(err)
+			// }
+			// v.ledger.AddConnection(c)
 		case tea.KeyCtrlC:
 			return tea.Quit
 		}

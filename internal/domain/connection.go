@@ -13,9 +13,8 @@ type Connection struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 	Host     string `json:"host"`
-	Port     int    `json:"port,omitempty"`
 	Database string `json:"database,omitempty"`
 	Query    string `json:"query,omitempty"`
 	Type     DBType `json:"type"`
-	Conn     string
+	Conn     string `json:"-"`
 }
